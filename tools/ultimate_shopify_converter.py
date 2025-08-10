@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Linux-Optimized Ultimate Shopify Documentation Converter
+FIXED Ultimate Shopify Documentation Converter
 Perfect for Claude Code interaction
 """
 
@@ -32,16 +32,18 @@ class LinuxUltimateConverter:
         """Convert single page with ultimate formatting"""
         
         full_path = self.docs_root / file_path
-        if not full_path.exists():
-            print(f"❌ File not found: {full_path}")
-            return False
+        
+        # Create directory if it doesn't exist
+        full_path.parent.mkdir(parents=True, exist_ok=True)
         
         print(f"\n🔄 Converting: {shopify_url}")
         print(f"📄 To: {file_path}")
         
         try:
             # Fetch content
-            headers = {'User-Agent': 'Mozilla/5.0 (Linux; Ubuntu) AppleWebKit/537.36'}
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+            }
             response = requests.get(shopify_url, headers=headers, timeout=30)
             response.raise_for_status()
             
@@ -63,105 +65,122 @@ class LinuxUltimateConverter:
     def process_content(self, soup, url):
         """Process content for Claude Code optimization"""
         
-        # Find main content
-        main = (soup.find('main') or 
-               soup.find('article') or 
-               soup.find('[role="main"]') or 
-               soup.find('.content'))
+        # Find main content area
+        main_content = None
+        for selector in [
+            'main',
+            '[role="main"]', 
+            '.content',
+            '.main-content',
+            'article',
+            '.docs-content'
+        ]:
+            main_content = soup.select_one(selector)
+            if main_content:
+                break
         
-        if main:
-            soup = main
+        if main_content:
+            soup = main_content
         
-        # Remove navigation elements
-        for elem in soup.find_all(['nav', 'header', 'footer', 'aside', 'script', 'style']):
-            elem.decompose()
+        # Remove unwanted elements
+        for selector in ['nav', 'header', 'footer', 'aside', 'script', 'style', '.navigation', '.sidebar']:
+            for elem in soup.select(selector):
+                elem.decompose()
         
         # Process images for Claude Code
         for img in soup.find_all('img'):
-            self.convert_image(soup, img)
+            self.convert_image_to_description(img)
         
         # Process code blocks
         for pre in soup.find_all('pre'):
-            self.enhance_code_block(soup, pre)
+            self.enhance_code_block(pre)
         
         # Process info boxes
-        for box in soup.find_all(['div'], class_=lambda x: x and any(
-            cls in ' '.join(x).lower() for cls in ['warning', 'caution', 'tip', 'note']
+        for box in soup.find_all(['div', 'aside'], class_=lambda x: x and any(
+            cls in ' '.join(x).lower() for cls in ['warning', 'caution', 'tip', 'note', 'info']
         )):
-            self.convert_info_box(soup, box)
+            self.convert_info_box(box)
         
         # Convert to markdown
-        markdown = self.h.handle(str(soup))
+        try:
+            markdown = self.h.handle(str(soup))
+        except Exception as e:
+            print(f"⚠️ Markdown conversion issue: {e}")
+            markdown = str(soup)  # Fallback to raw HTML
         
         # Add frontmatter and analysis
         return self.add_metadata(markdown, url)
     
-    def convert_image(self, soup, img):
-        """Convert image to description for Claude Code"""
+    def convert_image_to_description(self, img):
+        """Convert image to detailed description for Claude Code"""
         
         alt = img.get('alt', '')
         src = img.get('src', '')
         
-        # Generate description
+        # Generate contextual description
         if 'terminal' in src.lower() or 'cli' in src.lower():
-            desc = "Terminal/CLI interface showing command execution"
-        elif 'admin' in src.lower():
-            desc = "Shopify Admin dashboard interface"
-        elif 'code' in src.lower():
-            desc = "Code example or file structure illustration"
+            desc = "Terminal/CLI interface showing command execution and output"
+        elif 'admin' in src.lower() or 'dashboard' in src.lower():
+            desc = "Shopify Admin dashboard interface showing configuration options"
+        elif 'code' in src.lower() or 'editor' in src.lower():
+            desc = "Code editor interface showing file structure and code examples"
+        elif 'diagram' in src.lower():
+            desc = "Technical diagram illustrating system architecture or workflow"
         elif alt:
-            desc = alt
+            desc = f"Interface screenshot: {alt}"
         else:
-            desc = "Documentation illustration"
+            desc = "Documentation illustration showing relevant UI or workflow"
         
-        # Replace with description
-        desc_elem = soup.new_tag('p')
-        desc_elem.string = f"\n**[IMAGE: {desc}]**\n"
-        img.replace_with(desc_elem)
+        # Replace with enhanced description
+        new_p = img.parent.new_tag('p') if img.parent else BeautifulSoup('<p></p>', 'html.parser').p
+        new_p.string = f"\n**[IMAGE: {desc}]**\n"
+        img.replace_with(new_p)
     
-    def enhance_code_block(self, soup, pre):
-        """Enhance code blocks for Claude Code"""
+    def enhance_code_block(self, pre):
+        """Enhance code blocks for Claude Code understanding"""
         
-        code = pre.get_text()
+        code_text = pre.get_text()
         
-        # Detect language
-        if code.strip().startswith(('$', '>', 'npm', 'shopify')):
-            lang = 'terminal'
-        elif 'import ' in code and 'from ' in code:
+        # Detect language from content
+        if code_text.strip().startswith(('$', '>', 'npm', 'shopify', 'cd ', 'mkdir')):
+            lang = 'bash'
+        elif 'import ' in code_text and ('from ' in code_text or 'react' in code_text.lower()):
             lang = 'javascript'
-        elif code.strip().startswith('{'):
+        elif 'function' in code_text and ('{' in code_text or '=>' in code_text):
+            lang = 'javascript'
+        elif code_text.strip().startswith(('{', '[')):
             lang = 'json'
-        elif '[' in code and ']' in code and '=' in code:
+        elif '=' in code_text and ('[' in code_text or 'name =' in code_text):
             lang = 'toml'
+        elif 'query' in code_text.lower() and ('{' in code_text or 'mutation' in code_text.lower()):
+            lang = 'graphql'
         else:
             lang = None
         
-        # Find filename
-        prev = pre.find_previous_sibling()
+        # Look for filename hints
         filename = None
-        if prev:
-            text = prev.get_text()
-            if any(ext in text for ext in ['.js', '.json', '.toml', '.md']):
+        prev_elem = pre.find_previous_sibling()
+        if prev_elem:
+            text = prev_elem.get_text()
+            if any(ext in text for ext in ['.js', '.json', '.toml', '.md', '.tsx', '.jsx']):
                 filename = text.strip()
         
         # Create enhanced block
-        enhanced = soup.new_tag('div')
+        enhanced_html = ""
         
         if filename:
-            file_p = soup.new_tag('p')
-            file_p.string = f"**File: `{filename}`**"
-            enhanced.append(file_p)
+            enhanced_html += f"<p><strong>File: <code>{filename}</code></strong></p>\n"
         
-        code_p = soup.new_tag('pre')
         if lang:
-            code_p.string = f"```{lang}\n{code}\n```"
+            enhanced_html += f"<pre><code class='language-{lang}'>{code_text}</code></pre>"
         else:
-            code_p.string = f"```\n{code}\n```"
-        enhanced.append(code_p)
+            enhanced_html += f"<pre><code>{code_text}</code></pre>"
         
-        pre.replace_with(enhanced)
+        # Replace with enhanced version
+        new_soup = BeautifulSoup(enhanced_html, 'html.parser')
+        pre.replace_with(new_soup)
     
-    def convert_info_box(self, soup, box):
+    def convert_info_box(self, box):
         """Convert info boxes to Claude Code format"""
         
         classes = ' '.join(box.get('class', [])).lower()
@@ -172,30 +191,25 @@ class LinuxUltimateConverter:
             box_type = '⚠️ CAUTION'  
         elif 'tip' in classes:
             box_type = '💡 TIP'
+        elif 'info' in classes:
+            box_type = '📝 INFO'
         else:
             box_type = '📝 NOTE'
         
         content = box.get_text().strip()
-        lines = content.split('\n')
         
-        # Create blockquote
-        quote_text = f"\n> **{box_type}**\n"
-        for line in lines:
-            if line.strip():
-                quote_text += f"> {line.strip()}\n"
-        quote_text += ">\n"
-        
-        quote_elem = soup.new_tag('div')
-        quote_elem.string = quote_text
-        box.replace_with(quote_elem)
+        # Create blockquote format
+        quote_html = f"<blockquote><strong>{box_type}</strong><br>{content}</blockquote>"
+        new_soup = BeautifulSoup(quote_html, 'html.parser')
+        box.replace_with(new_soup)
     
     def add_metadata(self, content, url):
-        """Add metadata for Claude Code"""
+        """Add metadata for Claude Code optimization"""
         
-        # Extract title
+        # Extract title from URL
         title = url.split('/')[-1].replace('-', ' ').title()
         
-        # Count elements
+        # Count elements for analysis
         word_count = len(content.split())
         code_blocks = content.count('```') // 2
         images = content.count('[IMAGE:')
@@ -214,14 +228,20 @@ stats:
 
 """
         
-        # Add analysis
+        # Add Claude Code analysis
         analysis = f"""## 🤖 Claude Code Analysis
 
-**Content optimized for AI assistance with:**
-- {code_blocks} code examples
-- {images} visual elements (converted to descriptions)
-- Structured markdown formatting
-- Cross-reference ready links
+**Content optimized for AI assistance:**
+- {code_blocks} code examples ready for analysis
+- {images} visual elements converted to descriptions  
+- Structured markdown with enhanced formatting
+- Cross-reference ready internal links
+
+**Perfect for Claude Code to help with:**
+- Code review and optimization
+- Implementation guidance
+- Troubleshooting and debugging
+- Best practices recommendations
 
 ---
 
@@ -229,7 +249,7 @@ stats:
         
         return frontmatter + analysis + content
     
-    def batch_convert(self, mapping_file="url_mapping.json"):
+    def batch_convert(self, mapping_file="manual_url_mapping.json"):
         """Convert all files from mapping"""
         
         if not Path(mapping_file).exists():
@@ -250,6 +270,11 @@ stats:
             
             if self.convert_page(url, file_path):
                 success += 1
+            else:
+                print(f"❌ Failed: {file_path}")
+            
+            # Brief pause to be respectful to the server
+            time.sleep(1)
             
             progress = (i / total) * 100
             print(f"📊 Progress: {progress:.1f}%")
@@ -262,12 +287,12 @@ def main():
     converter = LinuxUltimateConverter()
     
     # Check if mapping file exists
-    if Path("url_mapping.json").exists():
-        print("📋 Found url_mapping.json")
+    if Path("manual_url_mapping.json").exists():
+        print("📋 Found manual_url_mapping.json")
         converter.batch_convert()
     else:
-        print("❌ No url_mapping.json found")
-        print("💡 Run the smart_url_mapper.py first")
+        print("❌ No manual_url_mapping.json found")
+        print("💡 Use the manual_url_mapper.py to create mappings first")
 
 if __name__ == "__main__":
     main()
