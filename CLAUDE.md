@@ -173,19 +173,7 @@ To speed up the formatting process, user can use these commands after I complete
 
 After completing all documentation files, run these Linux commands to fix any Unicode/file icon corruption:
 
-**All-in-One Fix Command:**
-
-```bash
-find . -name "*.md" -type f -exec sed -i \
--e 's/\x14\x00\x00/└──/g' \
--e 's/\x1c\x00\x00/├──/g' \
--e 's/\x02/│/g' \
--e 's/ \x00\x00//g' \
--e 's/\x00\x00//g' \
--e 's/=\xEF\xBF\xBD/📁/g' {} \;
-```
-
-**Individual Fix Commands:**
+**Fix Commands:**
 
 ```bash
 # Fix DC4NULNUL (end branches)

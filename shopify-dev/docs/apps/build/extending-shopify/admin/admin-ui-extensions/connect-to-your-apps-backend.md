@@ -74,7 +74,7 @@ A merchant automatically generating an issue title and description in an admin a
 
 In the banner, click Generate issue. The issue's title and description are populated with data from your app's backend.
 
-**=Á api.recommendedProductIssue.js** `/app/routes/api.recommendedProductIssue.js`
+**ğŸ“ api.recommendedProductIssue.js** `/app/routes/api.recommendedProductIssue.js`
 ```javascript
 import { json } from "@remix-run/node";
 import { authenticate } from "../shopify.server";
@@ -107,7 +107,7 @@ export const loader = async ({ request }) => {
 };
 ```
 
-**=Á ActionExtension.jsx** `/extensions/issue-tracker-action/src/ActionExtension.jsx`
+**ğŸ“ ActionExtension.jsx** `/extensions/issue-tracker-action/src/ActionExtension.jsx`
 ```javascript
 import { useCallback, useEffect, useState } from "react";
 import {

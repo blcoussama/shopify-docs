@@ -32,9 +32,9 @@ The command creates a new extension template in your app's extensions directory 
 
 ```
 extensions/admin-link-extension/
- README.md
- locales/
-│    en.default.json     // The default locale for the extension
+├── README.md
+├── locales/
+│   ├── en.default.json     // The default locale for the extension
 │   ├── fr.json             // The French language translations for the extension
 ├── shopify.extension.toml  // The config file for the extension
 ```

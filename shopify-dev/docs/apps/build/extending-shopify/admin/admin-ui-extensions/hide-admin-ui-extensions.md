@@ -109,7 +109,7 @@ If there are any product variants, delete them and confirm that the admin action
 
 Add a product variant with two options and confirm that the admin action is visible in the More actions menu.
 
-**=Á BlockExtension.jsx** `/extensions/issue-tracker-conditional-block/src/BlockExtension.jsx`
+**ğŸ“ BlockExtension.jsx** `/extensions/issue-tracker-conditional-block/src/BlockExtension.jsx`
 ```javascript
 import { useEffect, useMemo, useState } from "react";
 import {
@@ -333,7 +333,7 @@ function App() {
 }
 ```
 
-**=Á shopify.extension.toml** `/extensions/issue-tracker-conditional-action/shopify.extension.toml`
+**ğŸ“ shopify.extension.toml** `/extensions/issue-tracker-conditional-action/shopify.extension.toml`
 ```toml
 api_version = "2025-01"
 
@@ -351,7 +351,7 @@ target = "admin.product-details.action.render"
 module = "./src/condition/shouldRender.js"
 ```
 
-**=Á shouldRender.js** `/extensions/issue-tracker-conditional-action/src/condition/shouldRender.js`
+**ğŸ“ shouldRender.js** `/extensions/issue-tracker-conditional-action/src/condition/shouldRender.js`
 ```javascript
 import { getProductVariants } from "../utils";
 
@@ -365,7 +365,7 @@ export default shopify.extend(TARGET, async ({ data }) => {
 });
 ```
 
-**=Á utils.js** `/extensions/issue-tracker-conditional-action/src/utils.js`
+**ğŸ“ utils.js** `/extensions/issue-tracker-conditional-action/src/utils.js`
 ```javascript
 export async function updateIssues(id, newIssues) {
   // This example uses metafields to store the data. For more information, refer to https://shopify.dev/docs/apps/custom-data/metafields.
