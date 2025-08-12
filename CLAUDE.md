@@ -141,6 +141,18 @@ ALWAYS report back:
 - Use TodoWrite tool to track progress on complex multi-step tasks
 - Systematically fix issues across all files when patterns are identified
 
+## Speed Commands for User
+To speed up the formatting process, user can use these commands after I complete a file:
+
+**"fix format"** - I will immediately run the standard fixes:
+- Replace Unicode tree characters with ASCII (├── │ └──)
+- Fix file icon corruption (=� → 📁)
+- Add missing **Terminal** labels to bash code blocks
+- Add missing **📁 filename** labels with file paths
+- Fix any other systematic formatting issues
+
+**"check file"** - I will verify the file has no Unicode/file icon issues before moving to next file
+
 ## MANDATORY PRE-CHECK PROCESS
 **BEFORE writing any markdown file, ALWAYS run these checks:**
 
@@ -155,32 +167,34 @@ ALWAYS report back:
 - Replace ALL instances with proper `📁` emoji
 - Verify EVERY filename has proper **📁 filename** format
 
-### 3. Automated Fix Script Pattern
+### 3. AUTOMATIC CORRUPTION DETECTION
+**I MUST automatically run hexdump check on EVERY file after writing:**
 ```bash
-# Check for Unicode issues
 hexdump -C filename.md | grep -E "1c 00 00|02.*1c|14 00 00"
-# Check for file icon corruption  
-grep -E "=�|=\ufffd|\*\*=.*\*\*" filename.md
 ```
+**If ANY corruption detected, IMMEDIATELY recreate the file cleanly WITHOUT user having to point it out.**
 
-### 4. Pre-Write Validation
-- **NEVER** write a file without running these checks first
-- If issues detected, fix BEFORE presenting to user
-- Create systematic approach: detect → fix → verify → write
-- If binary corruption detected, recreate file entirely rather than patching
+### 4. AUTO-FIX IMPLEMENTATION
+**After writing ANY markdown file, I MUST:**
+1. Run hexdump corruption check automatically
+2. If corruption found: immediately recreate file with clean ASCII tree structures
+3. Verify all **Terminal** labels are present
+4. Verify all **📁 filename** labels are present
+5. Never wait for user to point out these systematic errors
 
-### 5. Practical Implementation
-**For every content formatting task, I MUST:**
-1. Before writing any file, run mental checklist for Unicode/file icon issues
-2. If content contains directory structures, use ONLY ASCII tree characters
-3. If content has filenames, ensure ALL use **📁 filename** format
-4. If any =� or corrupted characters detected, fix immediately
-5. Use content_checker.py script when available to validate
+### 5. Practical Auto-Fix Workflow
+**For every file I write:**
+1. Write initial file
+2. AUTOMATICALLY run: `hexdump -C filename.md | grep -E "1c 00 00|02.*1c|14 00 00"`
+3. If ANY hits found → immediately recreate file with ASCII characters
+4. AUTOMATICALLY check for missing **Terminal** and **📁** labels
+5. Fix ALL issues before moving to next file
+6. User should NEVER have to point out Unicode/file icon corruption
 
-**Integration with workflow:**
-- When user provides content → check for issues → fix → format → write
-- Never present corrupted content to user
-- If major corruption detected, recreate file cleanly rather than patch
+**ZERO TOLERANCE POLICY:**
+- NEVER present corrupted files to user
+- ALWAYS auto-detect and auto-fix systematically
+- Make corruption detection invisible to user
 
 ## Success Metrics
 - Complete capture of all technical content
