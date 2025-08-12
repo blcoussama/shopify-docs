@@ -192,7 +192,7 @@ find . -name "*.md" -type f -exec sed -i 's/ \x00\x00//g' {} \;
 find . -name "*.md" -type f -exec sed -i 's/\x00\x00//g' {} \;
 
 # Fix corrupted file icons
-find . -name "*.md" -type f -exec sed -i 's/=\xEF\xBF\xBD/📁/g' {} \;
+find . -name "*.md" -type f -exec sed -i 's/**=�/**📁 /g' {} \;
 ```
 
 ## Success Metrics
